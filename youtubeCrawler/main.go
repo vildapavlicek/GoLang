@@ -7,27 +7,19 @@ import (
 	"time"
 	"youtubeCrawler/crawler"
 	"youtubeCrawler/handlers"
-	"youtubeCrawler/shared"
+	"youtubeCrawler/store"
 )
 
-///watch?v=pVHKp6ffURY
-var yt = "http://www.youtube.com"
-var firstLink = "/watch?v=sWcXBRTGrWo"
+var firstLink = "/watch?v=DT61L8hbbJ4"
+var secondLink = "/watch?v=Q3oItpVa9fs"
+
 
 func main() {
 
-	db := shared.MyDB{
-		User:   "root",
-		Pwd:    "1111",
-		DbUrl:  "tcp(127.0.0.1:3306)",
-		DbName: "testdb",
-	}
-
-	db.OpenConnection()
-
-	c := crawler.Crawl(yt, firstLink, 1000)
-
-	db.TestInsertSuffixUrl(c)
+	storeManager := store.New()
+	monster := crawler.New(storeManager)
+	go monster.Run()
+	defer storeManager.StoreDestination.Close()
 
 	m := http.NewServeMux()
 	server := &http.Server{
@@ -37,11 +29,10 @@ func main() {
 		WriteTimeout: 5 * time.Second,
 	}
 
-	handlers.SetHandlers(m)
-	fmt.Printf("Server listening at port: %v", server.Addr)
+	handlers.SetHandlers(m, monster)
+	fmt.Printf("Server listening at port: %v\n", server.Addr)
 	err := server.ListenAndServe()
 	if err != nil {
 		log.Printf("Failed to start server. Reason: %v", err)
 	}
-
 }
