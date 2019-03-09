@@ -31,6 +31,7 @@ func main() {
 
 	handlers.SetHandlers(m, monster)
 	fmt.Printf("Server listening at port: %v\n", server.Addr)
+	//TODO graceful shutdown
 	err := server.ListenAndServe()
 	if err != nil {
 		log.Printf("Failed to start server. Reason: %v", err)

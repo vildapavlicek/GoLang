@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/net/html"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -24,23 +23,20 @@ var MyClient = &http.Client{
 	Jar:     nil,
 }
 
+// Crawler struct holds all data needed for crawling
 type Crawler struct {
-	//numberOfIterations int
-	//firstLink          string
-	data         chan models.NextLink
-	stopSignal   chan bool
-	OutputTarget io.Closer
-	wg           sync.WaitGroup
-	nGoroutines  int
-	StoreManager store.Manager
+	data         chan models.NextLink //chan used for crawling
+	stopSignal   chan bool //chan to stop all crawling threads
+	wg           sync.WaitGroup //crawling threads waitGroup
+	nGoroutines  int //number of go routines for crawling
+	StoreManager store.Manager // manager for data storing
 }
 
+// returns *Crawler
 func New(storeManager *store.Manager) *Crawler {
 	nRoutines := getNumberOfRoutines()
 	return &Crawler{
-		//	firstLink:          link,
-		//	numberOfIterations: numOfIterations,
-		data:        make(chan models.NextLink, 500),
+		data:        make(chan models.NextLink),
 		wg:          sync.WaitGroup{},
 		nGoroutines: nRoutines,
 		stopSignal:  make(chan bool, nRoutines),
@@ -74,6 +70,7 @@ func getResponse(httpMethod, baseUrl, urlSuffix string, customHttpClient *http.C
 	return res
 }
 
+//parseNextVideoData takes *http.Response and parses next video link and title
 func parseNextVideoData(res *http.Response) (link, title string, err error) {
 	needTitle := false
 	tokenizer := html.NewTokenizerFragment(res.Body, `<div>`)
@@ -109,6 +106,7 @@ func parseNextVideoData(res *http.Response) (link, title string, err error) {
 	}
 }
 
+//gets number of go routines to use for crawling from "CRAWLER" env if no env found, sets default value
 func getNumberOfRoutines() int {
 	n, b := os.LookupEnv("CRAWLER")
 	if b {
@@ -123,6 +121,12 @@ func getNumberOfRoutines() int {
 }
 
 // Crawl crawls through youTube
+// takes data from Crawler.Data chan in form of nextLink struct
+// checks if enough iterations has been done
+// sends copy to Crawler.StoreManager.StorePipe to store data
+// calls getResponse to get *http.Body used to call parseNextVideoData to get urlSuffix and title
+// makes new NextLink struct and sends it to Crawler.Data chan to keep crawling
+// if receives stopSignal, crawling for that given thread stops
 func (c *Crawler) crawl(id int) {
 	var title string
 	var err error
@@ -145,6 +149,7 @@ func (c *Crawler) crawl(id int) {
 			c.data <- models.NextLink{Id: nextLink.Id, NOfIterations: nextLink.NOfIterations, Title: title, Link: urlSuffix, Number: nextLink.Number + 1}
 		case <-c.stopSignal:
 			c.wg.Done()
+			fmt.Printf("Thread ID-%v received stop signal and stopped\n", id)
 			return
 		default:
 
@@ -152,6 +157,7 @@ func (c *Crawler) crawl(id int) {
 	}
 }
 
+//Starts crawling
 func (c *Crawler) Run() {
 	c.wg.Add(c.nGoroutines)
 
@@ -162,16 +168,21 @@ func (c *Crawler) Run() {
 	go c.StoreManager.StoreData()
 	c.wg.Wait()
 	close(c.data)
+	fmt.Println("c.data Closed")
 	close(c.StoreManager.StorePipe)
+	fmt.Println("c.SotreManager.StorePipe closed")
 	fmt.Println("All channels closed")
 }
 
+// stops all crawling threads
 func (c *Crawler) Stop() {
 	for i := 0; i < c.nGoroutines; i++ {
+		fmt.Printf("Sending stop signal no. %v\n", i)
 		c.stopSignal <- true
 	}
 }
 
+//Adds link to the Crawler.Data chan to crawl
 func (c *Crawler) Add(firstLink models.NextLink) {
 	c.data <- firstLink
 }

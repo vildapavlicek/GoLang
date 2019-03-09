@@ -5,29 +5,17 @@ import (
 	"strings"
 )
 
-/* VideoData struct to hold data about video link
-Title - title of the video
-Link - part of the link: eg /watch?v=sWcXBRTGrWo
-*/
+//VideoData struct to hold data about video link
 type NextLink struct {
-	Title         string `json:"title"`
-	Link          string `json:"link"`
-	Number        int    `json:"number"`
-	Id            string `json:"id"`
-	NOfIterations int    `json:"n_of_iterations"`
-	Stop          bool
+	Title         string `json:"title"` // Title of the video
+	Link          string `json:"link"` // Link URL suffix `/watch?v=P-Xz-IeijSw`
+	Number        int    `json:"number"` // Number of iteration that data were received
+	Id            string `json:"id"` // ID string taken from Link in format `P-Xz-IeijSw`
+	NOfIterations int    `json:"n_of_iterations"` // Number of link to crawl from origin (first link)
+	Stop          bool // Deceprated
 }
 
-type Job struct {
-	Id              int
-	Name            string
-	FirstVideoLink  string
-	FirstVideoTitle string
-	NumIterations   uint
-	Progress        uint
-	Finished        bool
-}
-
+// used to create first link to start crawling from
 func NewNextLink(firstLink string, numberOfIterations int) NextLink {
 	fmt.Printf("Num of iterations is %v\n", numberOfIterations)
 	if numberOfIterations == 0 {

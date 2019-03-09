@@ -11,11 +11,10 @@ import (
 	"youtubeCrawler/models"
 )
 
-// DbStore struct that holds config data and pointer to *sql.DB
-
+// Manager manages data storing
 type Manager struct {
-	StorePipe        chan models.NextLink
-	StoreDestination Storer
+	StorePipe        chan models.NextLink // chan to receive data to store from
+	StoreDestination Storer // destination where to store data, DB or file
 }
 
 type Storer interface {
@@ -23,6 +22,7 @@ type Storer interface {
 	Close()
 }
 
+// DbStore holds DB configuration
 type DbStore struct {
 	User   string
 	Pwd    string
@@ -35,26 +35,22 @@ type FileStore struct {
 	destFile *os.File
 }
 
-//TODO: load data from config and assign them to the struct
-func init() {
-
-}
-
+// Returns new *Manager
 func New() *Manager {
-	storeChan := make(chan models.NextLink, 500)
 	storeDestination, err := decideStoreTarget()
 	if err != nil {
 		fmt.Printf("Failed to resolve store destination. Reason: %s", err)
 		return nil
 	} else {
 		return &Manager{
-			StorePipe:        storeChan,
+			StorePipe:        make(chan models.NextLink, 500),
 			StoreDestination: storeDestination,
 		}
 	}
 
 }
 
+// Decides target to store data to. If opening connection to DB fails, saves data to file links.dat
 func decideStoreTarget() (Storer, error) {
 	db := DbStore{
 		User:   "root",
@@ -74,8 +70,8 @@ func decideStoreTarget() (Storer, error) {
 		file.Close()
 		return nil, err
 	}
-	thepath, err := filepath.Abs(filepath.Dir(file.Name()))
-	fmt.Printf("Created file at '%v'\n", thepath)
+	path, err := filepath.Abs(filepath.Dir(file.Name()))
+	fmt.Printf("Created file at '%v'\n", path)
 	return FileStore{destFile: file}, nil
 }
 
@@ -95,20 +91,20 @@ func (db *DbStore) OpenConnection() error {
 
 }
 
-//NewJobID inserts new job and returns its ID
+//TODO NewJobID inserts new job and returns its ID
 func (db *DbStore) NewJobId() (int, error) {
-	//TODO implement function logic
+
 	return -1, nil
 }
 
-//InsertNextVideoData inserts data to the DB taken from <-chan c
+//TODO InsertNextVideoData inserts data to the DB taken from <-chan c
 func (db *DbStore) InsertNextVideoData(c <-chan models.NextLink) error {
-	//TODO implement function logic
+
 	return nil
 }
 
+//TODO stores data to DB
 func (db DbStore) store(link models.NextLink) error {
-	//TODO implement
 	/*stmt, err := db.DbPool.Prepare("insert into videoData (`suffix`, `title`) values (?,?)")
 	if err != nil {
 		log.Printf("Failed to prepare stmt %s", err)
@@ -133,6 +129,7 @@ func (db DbStore) Close(){
 	db.DbPool.Close()
 }
 
+//TODO store data to file
 func (f FileStore) store(link models.NextLink) error {
 	s := "[ID: '" + link.Id + "', Link: '" + link.Link + "', Title: '" + link.Title + "', no.: '" + strconv.Itoa(link.Number) + "']\n"
 	_, err := f.destFile.Write([]byte(s))
@@ -142,6 +139,7 @@ func (f FileStore) store(link models.NextLink) error {
 	return nil
 }
 
+// stores data to configured destination
 func (m *Manager) StoreData() {
 
 	for {
