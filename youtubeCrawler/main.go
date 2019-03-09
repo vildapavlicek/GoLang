@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"time"
+	"youtubeCrawler/config"
 	"youtubeCrawler/crawler"
 	"youtubeCrawler/handlers"
 	"youtubeCrawler/store"
@@ -13,11 +15,19 @@ import (
 var firstLink = "/watch?v=DT61L8hbbJ4"
 var secondLink = "/watch?v=Q3oItpVa9fs"
 
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Failed to load '.env' config file. All values will be set to default if not set as system environment variable")
+	}
+}
 
 func main() {
 
-	storeManager := store.New()
-	monster := crawler.New(storeManager)
+	conf := config.New()
+	storeManager := store.New(conf.StoreConfig)
+
+	monster := crawler.New(storeManager, conf.CrawlerConfig)
 	go monster.Run()
 	defer storeManager.StoreDestination.Close()
 
