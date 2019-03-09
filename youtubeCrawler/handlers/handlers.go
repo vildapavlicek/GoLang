@@ -26,7 +26,6 @@ func index(w http.ResponseWriter, r *http.Request) {
 func handler(w http.ResponseWriter, r *http.Request) {
 }
 
-
 // accepts POST method to add new link for crawling if successful returns StatusCreated - 201 else StatusBadRequest 400
 // GET method returns http.StatusMethodNotAllowed - 405
 // default response set to http.StatusInternalServerError - 500
@@ -42,7 +41,7 @@ func linkHandler(crawler *crawler.Crawler, h http.HandlerFunc) http.HandlerFunc 
 				w.WriteHeader(http.StatusBadRequest)
 				w.Write([]byte("Invalid payload"))
 			} else {
-				link := models.NewNextLink(string(body), 0)
+				link := models.NewNextLink(string(body), crawler.Configuration.NumOfCrawls)
 				crawler.Add(link)
 				w.WriteHeader(http.StatusCreated)
 			}

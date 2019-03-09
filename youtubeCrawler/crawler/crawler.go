@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"youtubeCrawler/config"
 	"youtubeCrawler/models"
 	"youtubeCrawler/store"
 )
@@ -25,22 +26,24 @@ var MyClient = &http.Client{
 
 // Crawler struct holds all data needed for crawling
 type Crawler struct {
-	data         chan models.NextLink //chan used for crawling
-	stopSignal   chan bool //chan to stop all crawling threads
-	wg           sync.WaitGroup //crawling threads waitGroup
-	nGoroutines  int //number of go routines for crawling
-	StoreManager store.Manager // manager for data storing
+	data       chan models.NextLink //chan used for crawling
+	stopSignal chan bool            //chan to stop all crawling threads
+	wg         sync.WaitGroup       //crawling threads waitGroup
+	//nGoroutines  int                  //number of go routines for crawling
+	StoreManager  store.Manager // manager for data storing
+	Configuration config.CrawlerConfig
 }
 
 // returns *Crawler
-func New(storeManager *store.Manager) *Crawler {
-	nRoutines := getNumberOfRoutines()
+func New(storeManager *store.Manager, config config.CrawlerConfig) *Crawler {
+
 	return &Crawler{
-		data:        make(chan models.NextLink),
-		wg:          sync.WaitGroup{},
-		nGoroutines: nRoutines,
-		stopSignal:  make(chan bool, nRoutines),
-		StoreManager: *storeManager,
+		data: make(chan models.NextLink),
+		wg:   sync.WaitGroup{},
+		//nGoroutines:  config.NumOfGoroutines,
+		stopSignal:    make(chan bool, config.NumOfGoroutines),
+		StoreManager:  *storeManager,
+		Configuration: config,
 	}
 }
 
@@ -112,7 +115,7 @@ func getNumberOfRoutines() int {
 	if b {
 		num, err := strconv.Atoi(n)
 		if err != nil {
-			fmt.Errorf("Failed to convert value %v of env 'CRAWLER' to int. Setting default value of %v", n, DefaultNumberOfGoRoutines)
+			fmt.Printf("Failed to convert value %v of env 'CRAWLER' to int. Setting default value of %v\n", n, DefaultNumberOfGoRoutines)
 			return DefaultNumberOfGoRoutines
 		}
 		return num
@@ -159,10 +162,10 @@ func (c *Crawler) crawl(id int) {
 
 //Starts crawling
 func (c *Crawler) Run() {
-	c.wg.Add(c.nGoroutines)
+	c.wg.Add(c.Configuration.NumOfGoroutines)
 
-	for i := 0; i < c.nGoroutines; i++ {
-		fmt.Printf("Starting routine no. %v\n", i)
+	for i := 0; i < c.Configuration.NumOfGoroutines; i++ {
+		fmt.Printf("Starting routine no. %v\n", i+1)
 		go c.crawl(i)
 	}
 	go c.StoreManager.StoreData()
@@ -176,7 +179,7 @@ func (c *Crawler) Run() {
 
 // stops all crawling threads
 func (c *Crawler) Stop() {
-	for i := 0; i < c.nGoroutines; i++ {
+	for i := 0; i < c.Configuration.NumOfGoroutines; i++ {
 		fmt.Printf("Sending stop signal no. %v\n", i)
 		c.stopSignal <- true
 	}

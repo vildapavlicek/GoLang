@@ -8,13 +8,14 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"youtubeCrawler/config"
 	"youtubeCrawler/models"
 )
 
 // Manager manages data storing
 type Manager struct {
 	StorePipe        chan models.NextLink // chan to receive data to store from
-	StoreDestination Storer // destination where to store data, DB or file
+	StoreDestination Storer               // destination where to store data, DB or file
 }
 
 type Storer interface {
@@ -36,8 +37,8 @@ type FileStore struct {
 }
 
 // Returns new *Manager
-func New() *Manager {
-	storeDestination, err := decideStoreTarget()
+func New(config config.StoreConfig) *Manager {
+	storeDestination, err := decideStoreTarget(config)
 	if err != nil {
 		fmt.Printf("Failed to resolve store destination. Reason: %s", err)
 		return nil
@@ -51,12 +52,12 @@ func New() *Manager {
 }
 
 // Decides target to store data to. If opening connection to DB fails, saves data to file links.dat
-func decideStoreTarget() (Storer, error) {
+func decideStoreTarget(c config.StoreConfig)(Storer, error) {
 	db := DbStore{
-		User:   "root",
-		Pwd:    "1111",
-		DbUrl:  "tcp(127.0.0.1:3306)",
-		DbName: "testdb",
+		User:   c.DbUser,
+		Pwd:    c.DbPwd,
+		DbUrl:  "tcp(" + c.DbUrl + ")",
+		DbName: c.DbName,
 	}
 
 	err := db.OpenConnection()
@@ -65,7 +66,7 @@ func decideStoreTarget() (Storer, error) {
 		return db, nil
 	}
 
-	file, err := os.Create("links.dat")
+	file, err := os.Create(c.FilePath)
 	if err != nil {
 		file.Close()
 		return nil, err
@@ -125,7 +126,7 @@ func (db DbStore) store(link models.NextLink) error {
 	return nil
 }
 
-func (db DbStore) Close(){
+func (db DbStore) Close() {
 	db.DbPool.Close()
 }
 
@@ -157,6 +158,6 @@ func (m *Manager) StoreData() {
 	fmt.Println("Storing data finished")
 }
 
-func (f FileStore) Close(){
+func (f FileStore) Close() {
 	f.destFile.Close()
 }
