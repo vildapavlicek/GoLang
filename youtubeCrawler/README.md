@@ -1,5 +1,8 @@
-"# youtubeCrawler" 
-
+"# youtubeCrawler" <br>
+<p>
+Change all settings in .env file
+</p>
+<p>
 Endpoint: localhost:8080/api/v1/link <br>
 Adds link to crawl. Method POST only<br>
 Payload example (only 1 link per request): <br>
@@ -7,7 +10,8 @@ Payload example (only 1 link per request): <br>
 /watch?v=wOGu2j3PnFg<br>
 /watch?v=MH9FyLsfDzw<br>
 /watch?v=HZa1iFO0Juk<br>
-<br>
-
+</p>
+<p>
 Endpoint: localhost:8080/api/v1/stop<br>
 Stops all go routines and closes all channels<br>
+</p>
