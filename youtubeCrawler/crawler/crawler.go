@@ -6,9 +6,7 @@ import (
 	"golang.org/x/net/html"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
-	"strconv"
 	"sync"
 	"time"
 	"youtubeCrawler/config"
@@ -18,8 +16,8 @@ import (
 
 const DefaultNumberOfGoRoutines = 5
 
-//MyClient is a custom http client
-var MyClient = &http.Client{
+//myClient is a custom http client
+var myClient = &http.Client{
 	Timeout: 10 * time.Second,
 	Jar:     nil,
 }
@@ -109,20 +107,6 @@ func parseNextVideoData(res *http.Response) (link, title string, err error) {
 	}
 }
 
-//gets number of go routines to use for crawling from "CRAWLER" env if no env found, sets default value
-func getNumberOfRoutines() int {
-	n, b := os.LookupEnv("CRAWLER")
-	if b {
-		num, err := strconv.Atoi(n)
-		if err != nil {
-			fmt.Printf("Failed to convert value %v of env 'CRAWLER' to int. Setting default value of %v\n", n, DefaultNumberOfGoRoutines)
-			return DefaultNumberOfGoRoutines
-		}
-		return num
-	}
-	return DefaultNumberOfGoRoutines
-}
-
 // Crawl crawls through youTube
 // takes data from Crawler.Data chan in form of nextLink struct
 // checks if enough iterations has been done
@@ -143,7 +127,7 @@ func (c *Crawler) crawl(id int) {
 				break
 			}
 			c.StoreManager.StorePipe <- nextLink
-			res := getResponse("GET", "http://www.youtube.com", nextLink.Link, MyClient)
+			res := getResponse("GET", "http://www.youtube.com", nextLink.Link, myClient)
 			urlSuffix, title, err = parseNextVideoData(res)
 			res.Body.Close()
 			if err != nil {

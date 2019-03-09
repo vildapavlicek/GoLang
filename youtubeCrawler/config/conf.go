@@ -35,7 +35,6 @@ type StoreConfig struct {
 	FilePath string
 }
 
-
 //returns pointer to new config struct
 func New() *Config {
 	return &Config{

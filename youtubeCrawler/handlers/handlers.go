@@ -55,8 +55,7 @@ func linkHandler(crawler *crawler.Crawler, h http.HandlerFunc) http.HandlerFunc 
 func stopAll(crawler *crawler.Crawler, h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Stopping all threads")
-		go crawler.Stop()
-		fmt.Println("Threads stopped")
+		crawler.Stop()
 		w.WriteHeader(http.StatusOK)
 	}
 }

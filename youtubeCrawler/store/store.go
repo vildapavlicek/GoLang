@@ -52,7 +52,7 @@ func New(config config.StoreConfig) *Manager {
 }
 
 // Decides target to store data to. If opening connection to DB fails, saves data to file links.dat
-func decideStoreTarget(c config.StoreConfig)(Storer, error) {
+func decideStoreTarget(c config.StoreConfig) (Storer, error) {
 	db := DbStore{
 		User:   c.DbUser,
 		Pwd:    c.DbPwd,
