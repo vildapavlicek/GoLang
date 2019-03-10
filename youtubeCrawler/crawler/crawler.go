@@ -25,10 +25,8 @@ type Crawler struct {
 	data       chan models.NextLink //chan used for crawling
 	stopSignal chan bool            //chan to stop all crawling threads
 	wg         sync.WaitGroup       //crawling threads waitGroup
-	//nGoroutines  int                  //number of go routines for crawling
 	StoreManager  store.Manager // manager for data storing
 	Configuration config.CrawlerConfig
-	//Shutdown chan bool
 }
 
 // returns *Crawler
@@ -41,7 +39,6 @@ func New(storeManager *store.Manager, config config.CrawlerConfig) *Crawler {
 		stopSignal:    make(chan bool, config.NumOfGoroutines),
 		StoreManager:  *storeManager,
 		Configuration: config,
-		//Shutdown: make(chan bool, 1),
 	}
 }
 
@@ -159,7 +156,6 @@ func (c *Crawler) Run() {
 	close(c.StoreManager.StorePipe)
 	fmt.Println("c.SotreManager.StorePipe closed")
 	fmt.Println("All channels closed")
-	//c.Shutdown <- true
 }
 
 // stops all crawling threads

@@ -41,7 +41,7 @@ func main() {
 	monster := crawler.New(storeManager, conf.CrawlerConfig)
 	go monster.Run()
 
-	handlers.SetHandlers(m, monster, server)
+	handlers.SetHandlers(m, monster)
 	go startServer(server)
 
 	//TODO graceful shutdown
@@ -51,12 +51,10 @@ func main() {
 		case <-storeManager.Shutdown:
 			fmt.Println("Server shutting down")
 			server.Shutdown(context.TODO())
-			return
+			os.Exit(1)
 		default:
 		}
 	}
-
-	os.Exit(1)
 }
 
 func startServer(s *http.Server) {

@@ -10,10 +10,10 @@ import (
 )
 
 // registers all handlers with ServeMux
-func SetHandlers(m *http.ServeMux, c *crawler.Crawler, s *http.Server) {
+func SetHandlers(m *http.ServeMux, c *crawler.Crawler) {
 	m.HandleFunc("/", index)
-	m.HandleFunc("/api/v1/link", linkHandler(c, handler))
-	m.HandleFunc("/api/v1/stop", stopAll(c,s, handler))
+	m.HandleFunc("/api/v1/link", linkHandler(c))
+	m.HandleFunc("/api/v1/stop", stopAll(c))
 }
 
 //TODO should be used for landing page, so far used for testing tamplates
@@ -22,14 +22,10 @@ func index(w http.ResponseWriter, r *http.Request) {
 	tpl.Execute(w, "Vilda")
 }
 
-// empty handler used for wrapping
-func handler(w http.ResponseWriter, r *http.Request) {
-}
-
 // accepts POST method to add new link for crawling if successful returns StatusCreated - 201 else StatusBadRequest 400
 // GET method returns http.StatusMethodNotAllowed - 405
 // default response set to http.StatusInternalServerError - 500
-func linkHandler(crawler *crawler.Crawler, h http.HandlerFunc) http.HandlerFunc {
+func linkHandler(crawler *crawler.Crawler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
@@ -52,7 +48,7 @@ func linkHandler(crawler *crawler.Crawler, h http.HandlerFunc) http.HandlerFunc 
 }
 
 // stopAll calls Crawler.Stop which stops all crawling threads
-func stopAll(crawler *crawler.Crawler,s *http.Server, h http.HandlerFunc) http.HandlerFunc {
+func stopAll(crawler *crawler.Crawler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Stopping all threads")
 		crawler.Stop()
