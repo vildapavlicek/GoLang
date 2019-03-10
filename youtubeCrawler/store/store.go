@@ -95,36 +95,25 @@ func (db *DbStore) OpenConnection() error {
 
 }
 
-//TODO NewJobID inserts new job and returns its ID
-func (db *DbStore) NewJobId() (int, error) {
-
-	return -1, nil
-}
-
-//TODO InsertNextVideoData inserts data to the DB taken from <-chan c
-func (db *DbStore) InsertNextVideoData(c <-chan models.NextLink) error {
-
-	return nil
-}
-
 //TODO stores data to DB
 func (db DbStore) store(link models.NextLink) error {
-	/*stmt, err := db.DbPool.Prepare("insert into videoData (`suffix`, `title`) values (?,?)")
+	stmt, err := db.DbPool.Prepare("insert into videoData (`suffix`, `title`) values (?,?)")
 	if err != nil {
 		log.Printf("Failed to prepare stmt %s", err)
 	}
-	for data := range c {
-		insertId, err := stmt.Exec(data.Link, data.Title)
-		if err != nil {
-			log.Printf("Insert failed: %s", err)
-		}
+	insertId, err := stmt.Exec(link.Link, link.Title)
 
-		id, err := insertId.LastInsertId()
-		if err != nil {
-			log.Printf("Failed to get insert id: %s", err)
-		}
-		fmt.Printf("Inserted link %v; title: %v; with id %v\n", data.Link, data.Title, id)
-	}*/
+	if err != nil {
+		log.Printf("Insert failed: %s", err)
+	}
+
+	id, err := insertId.LastInsertId()
+	if err != nil {
+		log.Printf("Failed to get insert id: %s", err)
+	}
+	fmt.Printf("Inserted link %v; title: %v; with id %v\n", link.Link, link.Title, id)
+
+
 
 	return nil
 }
