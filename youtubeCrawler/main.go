@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+	"os"
 	"time"
 	"youtubeCrawler/config"
 	"youtubeCrawler/crawler"
@@ -25,12 +27,6 @@ func init() {
 func main() {
 
 	conf := config.New()
-	storeManager := store.New(conf.StoreConfig)
-
-	monster := crawler.New(storeManager, conf.CrawlerConfig)
-	go monster.Run()
-	defer storeManager.StoreDestination.Close()
-
 	m := http.NewServeMux()
 	server := &http.Server{
 		Addr:         ":8080",
@@ -39,10 +35,33 @@ func main() {
 		WriteTimeout: 5 * time.Second,
 	}
 
-	handlers.SetHandlers(m, monster)
-	fmt.Printf("Server listening at port: %v\n", server.Addr)
+	storeManager := store.New(conf.StoreConfig)
+	defer storeManager.StoreDestination.Close()
+
+	monster := crawler.New(storeManager, conf.CrawlerConfig)
+	go monster.Run()
+
+	handlers.SetHandlers(m, monster, server)
+	go startServer(server)
+
 	//TODO graceful shutdown
-	err := server.ListenAndServe()
+
+	for {
+		select {
+		case <-storeManager.Shutdown:
+			fmt.Println("Server shutting down")
+			server.Shutdown(context.TODO())
+			return
+		default:
+		}
+	}
+
+	os.Exit(1)
+}
+
+func startServer(s *http.Server) {
+	fmt.Printf("Server listening at port: %v\n", s.Addr)
+	err := s.ListenAndServe()
 	if err != nil {
 		log.Printf("Failed to start server. Reason: %v", err)
 	}

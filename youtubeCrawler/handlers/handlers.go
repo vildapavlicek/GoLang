@@ -10,10 +10,10 @@ import (
 )
 
 // registers all handlers with ServeMux
-func SetHandlers(m *http.ServeMux, c *crawler.Crawler) {
+func SetHandlers(m *http.ServeMux, c *crawler.Crawler, s *http.Server) {
 	m.HandleFunc("/", index)
 	m.HandleFunc("/api/v1/link", linkHandler(c, handler))
-	m.HandleFunc("/api/v1/stop", stopAll(c, handler))
+	m.HandleFunc("/api/v1/stop", stopAll(c,s, handler))
 }
 
 //TODO should be used for landing page, so far used for testing tamplates
@@ -52,7 +52,7 @@ func linkHandler(crawler *crawler.Crawler, h http.HandlerFunc) http.HandlerFunc 
 }
 
 // stopAll calls Crawler.Stop which stops all crawling threads
-func stopAll(crawler *crawler.Crawler, h http.HandlerFunc) http.HandlerFunc {
+func stopAll(crawler *crawler.Crawler,s *http.Server, h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Stopping all threads")
 		crawler.Stop()

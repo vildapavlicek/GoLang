@@ -14,8 +14,6 @@ import (
 	"youtubeCrawler/store"
 )
 
-const DefaultNumberOfGoRoutines = 5
-
 //myClient is a custom http client
 var myClient = &http.Client{
 	Timeout: 10 * time.Second,
@@ -30,18 +28,20 @@ type Crawler struct {
 	//nGoroutines  int                  //number of go routines for crawling
 	StoreManager  store.Manager // manager for data storing
 	Configuration config.CrawlerConfig
+	//Shutdown chan bool
 }
 
 // returns *Crawler
 func New(storeManager *store.Manager, config config.CrawlerConfig) *Crawler {
 
 	return &Crawler{
-		data: make(chan models.NextLink),
+		data: make(chan models.NextLink, 5),
 		wg:   sync.WaitGroup{},
 		//nGoroutines:  config.NumOfGoroutines,
 		stopSignal:    make(chan bool, config.NumOfGoroutines),
 		StoreManager:  *storeManager,
 		Configuration: config,
+		//Shutdown: make(chan bool, 1),
 	}
 }
 
@@ -159,6 +159,7 @@ func (c *Crawler) Run() {
 	close(c.StoreManager.StorePipe)
 	fmt.Println("c.SotreManager.StorePipe closed")
 	fmt.Println("All channels closed")
+	//c.Shutdown <- true
 }
 
 // stops all crawling threads

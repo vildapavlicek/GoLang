@@ -16,6 +16,7 @@ import (
 type Manager struct {
 	StorePipe        chan models.NextLink // chan to receive data to store from
 	StoreDestination Storer               // destination where to store data, DB or file
+	Shutdown chan bool
 }
 
 type Storer interface {
@@ -41,11 +42,13 @@ func New(config config.StoreConfig) *Manager {
 	storeDestination, err := decideStoreTarget(config)
 	if err != nil {
 		fmt.Printf("Failed to resolve store destination. Reason: %s", err)
+		panic(err)
 		return nil
 	} else {
 		return &Manager{
 			StorePipe:        make(chan models.NextLink, 500),
 			StoreDestination: storeDestination,
+			Shutdown: make(chan bool, 1),
 		}
 	}
 
@@ -145,7 +148,13 @@ func (m *Manager) StoreData() {
 
 	for {
 		select {
-		case data := <-m.StorePipe:
+		case data, ok := <-m.StorePipe:
+			if !ok {
+				fmt.Println("Store channel closed, shutting down")
+				m.Shutdown <- true
+				close(m.Shutdown)
+				return
+			}
 			err := m.StoreDestination.store(data)
 			if err != nil {
 				fmt.Printf("Failed to store data [ID: %v], iteration %v, reason: %s", data.Id, data.Number, err)
