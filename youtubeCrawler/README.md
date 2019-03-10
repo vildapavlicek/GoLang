@@ -13,5 +13,5 @@ Payload example (only 1 link per request): <br>
 </p>
 <p>
 Endpoint: localhost:8080/api/v1/stop<br>
-Stops all go routines and closes all channels<br>
+Stops all go routines, closes all channels and shutdowns application<br>
 </p>
