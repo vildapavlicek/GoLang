@@ -1,12 +1,34 @@
 package crawler
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
+	"sync"
 	"testing"
+	"time"
+	"youtubeCrawler/models"
+	"youtubeCrawler/store"
 )
+
+type countParser struct {
+}
+
+func (cp countParser) ParseData(response *http.Response) (link, title string, err error) {
+	return "", "", nil
+}
+
+type fakeStore struct {
+	data []models.NextLink
+}
+
+func (fs fakeStore) Store(link models.NextLink) error {
+	fs.data = append(fs.data, link)
+	return nil
+}
+
+func (fs fakeStore) Close() {
+
+}
 
 func TestGetResponse(t *testing.T) {
 	t.Run("OK Response", func(t *testing.T) {
@@ -20,90 +42,110 @@ func TestGetResponse(t *testing.T) {
 	})
 }
 
-func TestParseNextVideoData(t *testing.T) {
+func TestCrawl(t *testing.T) {
+	t.Run("Test 30 iterations", func(t *testing.T) {
+		testStore := fakeStore{
+			data: make([]models.NextLink, 30),
+		}
+		testStoreManager := &store.Manager{
+			StorePipe:        make(chan models.NextLink, 10),
+			StoreDestination: testStore,
+			Shutdown:         make(chan bool, 1),
+		}
 
-	t.Run("ParseNextVideoData from response.dat", func(t *testing.T) {
-		file, err := os.Open("response.dat")
-		if err != nil {
-			t.Errorf("Failed to open file with test data; reason: %s", err)
-		}
-		body, err := ioutil.ReadAll(file)
-		if err != nil {
-			t.Errorf("Failed to read test data from file; reason: %s", err)
-		}
-		server := makeFakeYoutubeServer(body)
+		server := makeHttpServer(200)
 		defer server.Close()
 
-		res := getResponse("GET", server.URL, "", myClient)
-		defer res.Body.Close()
-		wantLink := "/watch?v=KR-eV7fHNbM"
-		wantTitle := "TheFatRat - The Calling (feat. Laura Brehm)"
-		gotLink, gotTitle, err := parseNextVideoData(res)
-		if err != nil {
-			t.Errorf("Failed to parse response body; %s; reason: %s", res.Body, err)
+		firstLink := models.NextLink{
+			BaseUrl:       server.URL,
+			Link:          "",
+			NOfIterations: 30,
+			Number:        0,
 		}
 
-		assertLinkEquals(t, wantLink, gotLink)
-		assertTitleEquals(t, wantTitle, gotTitle)
+		cp := countParser{}
+				crawler := Crawler{
+			data: make(chan models.NextLink, 5),
+			parser: cp,
+			wg: sync.WaitGroup{},
+			stopSignal: make(chan bool),
+			StoreManager: testStoreManager,
+		}
+		crawler.Add(firstLink)
+		go crawler.crawl(1, crawler.parser)
+		go crawler.StoreManager.StoreData()
+		time.Sleep(3 * time.Second)
+		crawler.Stop()
+
+		wantLength := 30
+		gotLength := len(testStore.data)
+
+		assertLengthEquals(t, wantLength, gotLength)
 
 	})
 
-	t.Run("ParseNextVideoData from response2.dat", func(t *testing.T) {
-		file, err := os.Open("response2.dat")
-		if err != nil {
-			t.Errorf("Failed to open file with test data; reason: %s", err)
+	t.Run("Test 20 iterations", func(t *testing.T) {
+		testStore := fakeStore{
+			data: make([]models.NextLink, 30),
 		}
-		body, err := ioutil.ReadAll(file)
-		if err != nil {
-			t.Errorf("Failed to read test data from file; reason: %s", err)
+		testStoreManager := &store.Manager{
+			StorePipe:        make(chan models.NextLink, 10),
+			StoreDestination: testStore,
+			Shutdown:         make(chan bool, 1),
 		}
-		server := makeFakeYoutubeServer(body)
+
+		server := makeHttpServer(200)
 		defer server.Close()
 
-		res := getResponse("GET", server.URL, "", myClient)
-		defer res.Body.Close()
-		wantLink := "/watch?v=TsTFVdcpLrE"
-		wantTitle := "Hans Zimmer - Time ( Cyberdesign Remix )"
-		gotLink, gotTitle, err := parseNextVideoData(res)
-		if err != nil {
-			t.Errorf("Failed to parse response body; %s; reason: %s", res.Body, err)
+		firstLink := models.NextLink{
+			BaseUrl:       server.URL,
+			Link:          "",
+			NOfIterations: 20,
+			Number:        0,
 		}
 
-		assertLinkEquals(t, wantLink, gotLink)
-		assertTitleEquals(t, wantTitle, gotTitle)
-	})
+		cp := countParser{}
+		crawler := Crawler{
+			data: make(chan models.NextLink, 5),
+			parser: cp,
+			wg: sync.WaitGroup{},
+			stopSignal: make(chan bool),
+			StoreManager: testStoreManager,
+		}
+		crawler.Add(firstLink)
+		go crawler.crawl(1, crawler.parser)
+		go crawler.StoreManager.StoreData()
+		time.Sleep(3 * time.Second)
+		crawler.Stop()
 
+		wantLength := 30
+		gotLength := len(testStore.data)
+
+		assertLengthEquals(t, wantLength, gotLength)
+
+	})
 }
+
+
 
 func makeHttpServer(status int) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(status)
-	}))
-}
-
-func makeFakeYoutubeServer(body []byte) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write(body)
 
 	}))
 }
 
 func assertStatusEquals(t *testing.T, want, got int) {
+	t.Helper()
 	if want != got {
 		t.Errorf("Got '%v', want: '%v'", got, want)
 	}
 
 }
 
-func assertLinkEquals(t *testing.T, wantLink, gotLink string) {
-	if wantLink != gotLink {
-		t.Errorf("Got %s, want %s", gotLink, wantLink)
-	}
-}
-
-func assertTitleEquals(t *testing.T, wantTitle, gotTitle string) {
-	if wantTitle != gotTitle {
-		t.Errorf("Got %s, want %s", gotTitle, wantTitle)
+func assertLengthEquals(t *testing.T, want, got int) {
+	t.Helper()
+	if want != got {
+		t.Errorf("Got '%v', want: '%v'", got, want)
 	}
 }

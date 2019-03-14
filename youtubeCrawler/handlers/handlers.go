@@ -27,6 +27,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 // default response set to http.StatusInternalServerError - 500
 func linkHandler(crawler *crawler.Crawler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
 		switch r.Method {
 		case "GET":
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -50,6 +51,7 @@ func linkHandler(crawler *crawler.Crawler) http.HandlerFunc {
 // stopAll calls Crawler.Stop which stops all crawling threads
 func stopAll(crawler *crawler.Crawler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
 		fmt.Println("Stopping all threads")
 		crawler.Stop()
 		w.WriteHeader(http.StatusOK)

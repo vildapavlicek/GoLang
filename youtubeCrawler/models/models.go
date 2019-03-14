@@ -7,7 +7,8 @@ import (
 
 //VideoData struct to hold data about video link
 type NextLink struct {
-	Title         string `json:"title"`           // Title of the video
+	Title         string `json:"title"` // Title of the video
+	BaseUrl       string `json:"baseUrl"`
 	Link          string `json:"link"`            // Link URL suffix `/watch?v=P-Xz-IeijSw`
 	Number        int    `json:"number"`          // Number of iteration that data were received
 	Id            string `json:"id"`              // ID string taken from Link in format `P-Xz-IeijSw`
@@ -25,6 +26,7 @@ func NewNextLink(firstLink string, numberOfIterations int) NextLink {
 	return NextLink{
 		Title:         "",
 		Link:          firstLink,
+		BaseUrl:       "http://www.youtube.com",
 		Number:        0,
 		Id:            title[1],
 		NOfIterations: numberOfIterations,

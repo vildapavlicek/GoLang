@@ -16,11 +16,11 @@ import (
 type Manager struct {
 	StorePipe        chan models.NextLink // chan to receive data to store from
 	StoreDestination Storer               // destination where to store data, DB or file
-	Shutdown chan bool
+	Shutdown         chan bool
 }
 
 type Storer interface {
-	store(link models.NextLink) error
+	Store(link models.NextLink) error
 	Close()
 }
 
@@ -48,7 +48,7 @@ func New(config config.StoreConfig) *Manager {
 		return &Manager{
 			StorePipe:        make(chan models.NextLink, 500),
 			StoreDestination: storeDestination,
-			Shutdown: make(chan bool, 1),
+			Shutdown:         make(chan bool, 1),
 		}
 	}
 
@@ -96,7 +96,7 @@ func (db *DbStore) OpenConnection() error {
 }
 
 //TODO stores data to DB
-func (db DbStore) store(link models.NextLink) error {
+func (db DbStore) Store(link models.NextLink) error {
 	stmt, err := db.DbPool.Prepare("insert into videoData (`suffix`, `title`) values (?,?)")
 	if err != nil {
 		log.Printf("Failed to prepare stmt %s", err)
@@ -113,8 +113,6 @@ func (db DbStore) store(link models.NextLink) error {
 	}
 	fmt.Printf("Inserted link %v; title: %v; with id %v\n", link.Link, link.Title, id)
 
-
-
 	return nil
 }
 
@@ -123,7 +121,7 @@ func (db DbStore) Close() {
 }
 
 //TODO store data to file
-func (f FileStore) store(link models.NextLink) error {
+func (f FileStore) Store(link models.NextLink) error {
 	s := "[ID: '" + link.Id + "', Link: '" + link.Link + "', Title: '" + link.Title + "', no.: '" + strconv.Itoa(link.Number) + "']\n"
 	_, err := f.destFile.Write([]byte(s))
 	if err != nil {
@@ -144,7 +142,7 @@ func (m *Manager) StoreData() {
 				close(m.Shutdown)
 				return
 			}
-			err := m.StoreDestination.store(data)
+			err := m.StoreDestination.Store(data)
 			if err != nil {
 				fmt.Printf("Failed to store data [ID: %v], iteration %v, reason: %s", data.Id, data.Number, err)
 			}

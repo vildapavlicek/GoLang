@@ -66,13 +66,13 @@ func getEnv(envName string, defaultValue string) string {
 func getEnvAsInt(envName string, defaultValue int) int {
 	value := getEnv(envName, "")
 	if value == "" {
-		fmt.Printf("Env \"%s\" not found. Setting default value '%v'", envName, defaultValue)
+		fmt.Printf("Env \"%s\" not found. Setting default value '%v\n'", envName, defaultValue)
 		return defaultValue
 	}
 
 	n, err := strconv.Atoi(value)
 	if err != nil {
-		fmt.Printf("Failed to convert env \"%s\" value '%v' to int. Setting default value '%v'", envName, value, defaultValue)
+		fmt.Printf("Failed to convert env \"%s\" value '%v' to int. Setting default value '%v'\n", envName, value, defaultValue)
 		return defaultValue
 	}
 

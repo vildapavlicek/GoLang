@@ -7,10 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
 	"youtubeCrawler/config"
 	"youtubeCrawler/crawler"
 	"youtubeCrawler/handlers"
+	"youtubeCrawler/parsers"
 	"youtubeCrawler/store"
 )
 
@@ -26,6 +28,9 @@ func init() {
 
 func main() {
 
+	stop := make(chan os.Signal, 1)
+	go catchSignal(stop)
+
 	conf := config.New()
 	m := http.NewServeMux()
 	server := &http.Server{
@@ -38,13 +43,12 @@ func main() {
 	storeManager := store.New(conf.StoreConfig)
 	defer storeManager.StoreDestination.Close()
 
-	monster := crawler.New(storeManager, conf.CrawlerConfig)
+	monster := crawler.New(storeManager, conf.CrawlerConfig, parsers.YoutubeParser{})
 	go monster.Run()
 
 	handlers.SetHandlers(m, monster)
 	go startServer(server)
 
-	//TODO graceful shutdown
 
 	for {
 		select {
@@ -52,6 +56,8 @@ func main() {
 			fmt.Println("Server shutting down")
 			server.Shutdown(context.TODO())
 			os.Exit(1)
+		case <-stop:
+			monster.Stop()
 		default:
 		}
 	}
@@ -63,4 +69,8 @@ func startServer(s *http.Server) {
 	if err != nil {
 		log.Printf("Failed to start server. Reason: %v", err)
 	}
+}
+
+func catchSignal(stopChan chan os.Signal) {
+	signal.Notify(stopChan, os.Interrupt)
 }
