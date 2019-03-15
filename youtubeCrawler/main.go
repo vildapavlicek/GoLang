@@ -49,7 +49,7 @@ func main() {
 	handlers.SetHandlers(m, monster)
 	go startServer(server)
 
-
+	//TODO: BUG if threads get stuck, doesn't shutdown
 	for {
 		select {
 		case <-storeManager.Shutdown:

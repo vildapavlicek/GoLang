@@ -36,7 +36,7 @@ type Crawler struct {
 func New(storeManager *store.Manager, config config.CrawlerConfig, parser parsers.DataParser) *Crawler {
 
 	return &Crawler{
-		data: make(chan models.NextLink, 5),
+		data: make(chan models.NextLink, 500),
 		wg:   sync.WaitGroup{},
 		//nGoroutines:  config.NumOfGoroutines,
 		stopSignal:    make(chan bool, config.NumOfGoroutines),
@@ -79,6 +79,7 @@ func getResponse(httpMethod, baseUrl, urlSuffix string, customHttpClient *http.C
 // calls getResponse to get *http.Body used to call parseNextVideoData to get urlSuffix and title
 // makes new NextLink struct and sends it to Crawler.Data chan to keep crawling
 // if receives stopSignal, crawling for that given thread stops
+//TODO BUG: if chan buffer value is smaller than number of links to crawl, threads get stuck
 func (c *Crawler) crawl(id int, parser parsers.DataParser) {
 	var title string
 	var err error
@@ -129,7 +130,7 @@ func (c *Crawler) Run() {
 // stops all crawling threads
 func (c *Crawler) Stop() {
 	for i := 0; i < c.Configuration.NumOfGoroutines; i++ {
-		fmt.Printf("Sending stop signal no. %v\n", i)
+		fmt.Printf("Sending stop signal to thread ID-%v\n", i)
 		c.stopSignal <- true
 	}
 }
