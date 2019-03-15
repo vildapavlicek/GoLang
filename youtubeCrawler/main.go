@@ -43,7 +43,7 @@ func main() {
 	storeManager := store.New(conf.StoreConfig)
 	defer storeManager.StoreDestination.Close()
 
-	monster := crawler.New(storeManager, conf.CrawlerConfig, parsers.YoutubeParser{})
+	monster := crawler.New(storeManager, conf.CrawlerConfig, parsers.YoutubeParser{}, os.Stdout)
 	go monster.Run()
 
 	handlers.SetHandlers(m, monster)

@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"sync"
@@ -17,7 +18,7 @@ var myClient = &http.Client{
 	Timeout: 10 * time.Second,
 	Jar:     nil,
 	Transport: &http.Transport{
-		MaxIdleConns:15,
+		MaxIdleConns:    15,
 		IdleConnTimeout: 30 * time.Second,
 	},
 }
@@ -27,13 +28,14 @@ type Crawler struct {
 	data          chan models.NextLink //chan used for crawling
 	stopSignal    chan bool            //chan to stop all crawling threads
 	wg            sync.WaitGroup       //crawling threads waitGroup
-	StoreManager  *store.Manager        // manager for data storing
+	StoreManager  *store.Manager       // manager for data storing
 	Configuration config.CrawlerConfig
 	parser        parsers.DataParser
+	printTarget   io.Writer
 }
 
 // returns *Crawler
-func New(storeManager *store.Manager, config config.CrawlerConfig, parser parsers.DataParser) *Crawler {
+func New(storeManager *store.Manager, config config.CrawlerConfig, parser parsers.DataParser, printTarget io.Writer) *Crawler {
 
 	return &Crawler{
 		data: make(chan models.NextLink, 500),
@@ -43,6 +45,7 @@ func New(storeManager *store.Manager, config config.CrawlerConfig, parser parser
 		StoreManager:  storeManager,
 		Configuration: config,
 		parser:        parser,
+		printTarget:   printTarget,
 	}
 }
 
@@ -87,9 +90,9 @@ func (c *Crawler) crawl(id int, parser parsers.DataParser) {
 	for {
 		select {
 		case nextLink := <-c.data:
-			fmt.Printf("Thread ID-%v Got Link from channel: [ID: %v], [title: %s], [link: %s], [number: %v]\n", id, nextLink.Id, nextLink.Title, nextLink.Link, nextLink.Number)
+			fmt.Fprintf(c.printTarget, "Thread ID-%v Got Link from channel: [ID: %v], [title: %s], [link: %s], [number: %v]\n", id, nextLink.Id, nextLink.Title, nextLink.Link, nextLink.Number)
 			if nextLink.Number > nextLink.NOfIterations {
-				fmt.Printf("Stopped crawling for [ID: %v]; reached no. of iterations '%v' of '%v' on thread ID-%v ", nextLink.Id, nextLink.Number, nextLink.NOfIterations, id)
+				fmt.Fprintf(c.printTarget, "Stopped crawling for [ID: %v]; reached max iteration '%v' of '%v' on thread ID-%v\n", nextLink.Id, nextLink.Number, nextLink.NOfIterations, id)
 				break
 			}
 			c.StoreManager.StorePipe <- nextLink
@@ -97,12 +100,12 @@ func (c *Crawler) crawl(id int, parser parsers.DataParser) {
 			urlSuffix, title, err = c.parser.ParseData(res)
 			res.Body.Close()
 			if err != nil {
-				fmt.Println("Failed parseNextVideoData, reason: ", err)
+				fmt.Fprintf(c.printTarget, "Failed parseNextVideoData, reason: %s", err)
 			}
 			c.data <- models.NextLink{Id: nextLink.Id, NOfIterations: nextLink.NOfIterations, Title: title, Link: urlSuffix, Number: nextLink.Number + 1, BaseUrl: nextLink.BaseUrl}
 		case <-c.stopSignal:
 			c.wg.Done()
-			fmt.Printf("Thread ID-%v received stop signal and stopped\n", id)
+			fmt.Fprintf(c.printTarget, "Thread ID-%v received stop signal and stopped\n", id)
 			return
 		default:
 
@@ -115,22 +118,22 @@ func (c *Crawler) Run() {
 	c.wg.Add(c.Configuration.NumOfGoroutines)
 
 	for i := 0; i < c.Configuration.NumOfGoroutines; i++ {
-		fmt.Printf("Starting routine no. %v\n", i+1)
+		fmt.Fprintf(c.printTarget, "Starting routine no. %v\n", i+1)
 		go c.crawl(i, parsers.YoutubeParser{})
 	}
 	go c.StoreManager.StoreData()
 	c.wg.Wait()
 	close(c.data)
-	fmt.Println("c.data Closed")
+	fmt.Fprintf(c.printTarget, "c.data Closed")
 	close(c.StoreManager.StorePipe)
-	fmt.Println("c.StoreManager.StorePipe closed")
-	fmt.Println("All channels closed")
+	fmt.Fprintf(c.printTarget, "c.StoreManager.StorePipe closed")
+	fmt.Fprintf(c.printTarget, "All channels closed")
 }
 
 // stops all crawling threads
 func (c *Crawler) Stop() {
 	for i := 0; i < c.Configuration.NumOfGoroutines; i++ {
-		fmt.Printf("Sending stop signal to thread ID-%v\n", i)
+		fmt.Fprintf(c.printTarget, "Sending stop signal to thread ID-%v\n", i)
 		c.stopSignal <- true
 	}
 }
