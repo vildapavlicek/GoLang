@@ -1,5 +1,8 @@
 "# youtubeCrawler" <br>
 <p>
+  Uses Modules for dependency management
+</p>
+<p>
 Change all settings in .env file
 </p>
 <p>
