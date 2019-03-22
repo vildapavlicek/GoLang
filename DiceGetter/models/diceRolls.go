@@ -1,13 +1,14 @@
 package models
 
 import (
-	"../dataParser"
 	"net/http"
+
+	dataparser "github.com/vildapavlicek/GoLang/DiceGetter/dataParser"
 )
 
+//DiceRolls main struct
 type DiceRolls struct {
 	NumOfRolls int
 	Client     *http.Client
-	Parser     dataParser.HtmlParser
-	Data       []int `json:"data"`
+	Parser     dataparser.HTMLParser
 }

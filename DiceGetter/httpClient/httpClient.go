@@ -1,6 +1,7 @@
 package httpClient
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -26,9 +27,11 @@ func getRequest(method, url string, body io.Reader) (*http.Request, error) {
 	return request, err
 }
 
-func (c *customClient) getResponse(method, url string, body io.Reader) (*http.Response, error) {
-	request, err := getRequest(method, url, body)
-	defer request.Body.Close()
+// GetResponse gets response
+func (c *customClient) GetResponse(method, baseURL, paramsURL string, body io.Reader) (*http.Response, error) {
+	uri := baseURL + paramsURL
+	request, err := getRequest(method, uri, body)
+
 	if err != nil {
 		return nil, err
 	}
@@ -37,5 +40,6 @@ func (c *customClient) getResponse(method, url string, body io.Reader) (*http.Re
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Response %v\n", response.Status)
 	return response, nil
 }
