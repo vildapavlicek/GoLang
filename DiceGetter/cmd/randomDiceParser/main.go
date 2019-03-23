@@ -2,34 +2,33 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"time"
 
-	dataparser "github.com/vildapavlicek/GoLang/DiceGetter/dataParser"
-
-	"github.com/vildapavlicek/GoLang/DiceGetter/httpClient"
+	httpclient "github.com/vildapavlicek/GoLang/DiceGetter/httpClient"
+	"github.com/vildapavlicek/GoLang/DiceGetter/models"
 )
 
 func main() {
 	timeout := 5 * time.Second
-	client := httpClient.New(timeout)
-	var data []int
+	client := httpclient.New(timeout, 10)
 
-	response, err := client.GetResponse("GET", "https://www.random.org/", "dice/?num=10", nil)
+	diceRolls := models.New(client)
+
+	response, err := diceRolls.Client.GetResponse("GET", nil)
 	if err != nil {
-		fmt.Printf("Failed to get response; %s", err)
+		log.Printf("failed to get correct response, error: %s ", err)
+		os.Exit(1)
 	}
 
-	data, err = dataparser.ParseHTML(response, data)
-	if err != nil {
-		fmt.Printf("Data parsing failed; %s", err)
-	}
-
-	fmt.Println(data)
+	diceRolls.ParseHTML(response)
+	fmt.Println(diceRolls.Data)
 }
 
 /*
 Question 1: Write a program to do the following:
-● TODO: Make an HTTP request to https://www.random.org/dice/?num=10 . Make sure to handle error statuses, timeouts, etc.
+● DONE: Make an HTTP request to https://www.random.org/dice/?num=10 . Make sure to handle error statuses, timeouts, etc.
 ● TODO: Parse out the 10 dice values returned. For this example, let’s suppose that the values returned are as follows: 3,5,1,2,6,5,1,6,4,2
 ● TODO: Bucket the die’s by their value, and output the counts to stdout. Continuing with the aforementioned example data, the output ( format: die value -> count ) would look like:
 ○ 1 -> 2

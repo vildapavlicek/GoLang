@@ -1,7 +1,6 @@
 package dataparser
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -63,46 +62,36 @@ func (d *DiceRolls) parseRollNumber(n *html.Node) int {
 */
 
 //ParseHTML parser for results from page https://www.random.org returns array of results
-func ParseHTML(response *http.Response, data []int) ([]int, error) {
+func ParseHTML(response *http.Response) error {
 	defer response.Body.Close()
-	d := data
 	doc, err := html.Parse(response.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	return parseAltAtribute(doc, d), nil
+	parseAltAtribute(doc)
+	return nil
 }
 
-func parseAltAtribute(n *html.Node, data []int) []int {
+func parseAltAtribute(n *html.Node) {
 	//fmt.Printf("Parsing data.\n")
-	d := data
 	if n.Data == "img" && n.Type == html.ElementNode {
-		fmt.Printf("Found img tag!\n")
-		d = append(d, parseRollNumber(n))
-		fmt.Printf("Data values is: %v; ", d)
+		//store data
 	}
 
 	for child := n.FirstChild; child != nil; child = child.NextSibling {
-		fmt.Printf("Passing data with values: %v; ", d)
-		parseAltAtribute(child, d)
+		parseAltAtribute(child)
 	}
-
-	return d
 }
 
 func parseRollNumber(n *html.Node) int {
-	fmt.Println("Parsing roll number")
 	var i int
 	var err error
 
 	for _, att := range n.Attr {
 		if att.Key == "alt" {
-			fmt.Printf("alt tag found with value: %v; ", att.Val)
 			if i, err = strconv.Atoi(att.Val); err != nil {
 				return -1
 			}
-			fmt.Printf("Returning value %v; ", i)
 			return i
 		}
 	}
