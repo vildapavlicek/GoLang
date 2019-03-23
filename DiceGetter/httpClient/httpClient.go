@@ -55,7 +55,7 @@ func (c *RandomOrgDiceRoller) GetResponse(method string, body io.Reader) (*http.
 	return response, nil
 }
 
-//PostRequest ....
+//PostRequest send a POST request to specified url in RandomOrgDiceRoller and sets body
 func (c *RandomOrgDiceRoller) PostRequest(body io.Reader) error {
 	request, err := getRequest("POST", c.postURI, body)
 	if err != nil {
