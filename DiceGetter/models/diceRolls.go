@@ -30,7 +30,7 @@ func New(hc *httpclient.RandomOrgDiceRoller) *DiceRolls {
 	}
 }
 
-//ParseHTML parser for results from page https://www.random.org returns array of results
+//ParseHTML parser for results from page https://www.random.org Closes response.Body
 func (d *DiceRolls) ParseHTML(response *http.Response) error {
 	defer response.Body.Close()
 	doc, err := html.Parse(response.Body)

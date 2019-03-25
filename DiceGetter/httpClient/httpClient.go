@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -51,6 +52,11 @@ func (c *RandomOrgDiceRoller) GetResponse(method string, body io.Reader) (*http.
 	response, err := c.client.Do(request)
 	if err != nil {
 		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		s := "Failed to get reponse 200 OK"
+		return nil, errors.New(s)
 	}
 	return response, nil
 }
