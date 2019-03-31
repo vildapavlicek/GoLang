@@ -9,9 +9,10 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-	"youtubeCrawler/config"
-	"youtubeCrawler/models"
-	"youtubeCrawler/store"
+
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/config"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/models"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/store"
 )
 
 type countParser struct {

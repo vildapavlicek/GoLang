@@ -3,17 +3,21 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
-	"youtubeCrawler/config"
-	"youtubeCrawler/crawler"
-	"youtubeCrawler/handlers"
-	"youtubeCrawler/parsers"
-	"youtubeCrawler/store"
+
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/config"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/crawler"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/handlers"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/parsers"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/store"
+
+	_ "net/http/pprof"
+
+	"github.com/joho/godotenv"
 )
 
 var firstLink = "/watch?v=DT61L8hbbJ4"
@@ -36,8 +40,8 @@ func main() {
 	server := &http.Server{
 		Addr:         ":8080",
 		Handler:      m,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  60 * time.Second,
+		WriteTimeout: 60 * time.Second,
 	}
 
 	storeManager := store.New(conf.StoreConfig)

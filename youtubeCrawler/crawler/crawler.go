@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"sync"
 	"time"
-	"youtubeCrawler/config"
-	"youtubeCrawler/models"
-	"youtubeCrawler/parsers"
-	"youtubeCrawler/store"
+
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/config"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/models"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/parsers"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/store"
 )
 
 //myClient is a custom http client
@@ -113,7 +114,7 @@ func (c *Crawler) crawl(id int, parser parsers.DataParser) {
 	}
 }
 
-//Starts crawling
+// Run starts crawling
 func (c *Crawler) Run() {
 	c.wg.Add(c.Configuration.NumOfGoroutines)
 
@@ -124,13 +125,13 @@ func (c *Crawler) Run() {
 	go c.StoreManager.StoreData()
 	c.wg.Wait()
 	close(c.data)
-	fmt.Fprintf(c.printTarget, "c.data Closed")
+	fmt.Fprintf(c.printTarget, "c.data Closed\n")
 	close(c.StoreManager.StorePipe)
-	fmt.Fprintf(c.printTarget, "c.StoreManager.StorePipe closed")
-	fmt.Fprintf(c.printTarget, "All channels closed")
+	fmt.Fprintf(c.printTarget, "c.StoreManager.StorePipe closed\n")
+	fmt.Fprintf(c.printTarget, "All channels closed\n")
 }
 
-// stops all crawling threads
+// Stop stops all crawling threads
 func (c *Crawler) Stop() {
 	for i := 0; i < c.Configuration.NumOfGoroutines; i++ {
 		fmt.Fprintf(c.printTarget, "Sending stop signal to thread ID-%v\n", i)

@@ -5,15 +5,22 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
-	"youtubeCrawler/crawler"
-	"youtubeCrawler/models"
+	"net/http/pprof"
+
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/crawler"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/models"
 )
 
-// registers all handlers with ServeMux
+// SetHandlers registers all handlers with ServeMux
 func SetHandlers(m *http.ServeMux, c *crawler.Crawler) {
 	m.HandleFunc("/", index)
 	m.HandleFunc("/api/v1/link", linkHandler(c))
 	m.HandleFunc("/api/v1/stop", stopAll(c))
+	m.HandleFunc("/debug/pprof/", pprof.Index)
+	m.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	m.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	m.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	m.HandleFunc("/debug/pprof/trace", pprof.Trace)
 }
 
 //TODO should be used for landing page, so far used for testing tamplates

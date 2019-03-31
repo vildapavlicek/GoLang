@@ -3,13 +3,14 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
 	"path/filepath"
 	"strconv"
-	"youtubeCrawler/config"
-	"youtubeCrawler/models"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/config"
+	"github.com/vildapavlicek/GoLang/youtubeCrawler/models"
 )
 
 // Manager manages data storing
