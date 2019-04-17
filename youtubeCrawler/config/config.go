@@ -6,48 +6,48 @@ import (
 	"strconv"
 )
 
-const DefaultNoOfGoroutines = 5
-const DefaultNoOfCrawlsPerLink = 10
-const DefaultDbUser = "guest"
-const DefaultDbPwd = ""
-const DefaultDbUrl = "127.0.0.1:3306"
-const DefaultDbName = ""
-const DefaultFilePath = "defaultFile.dat"
+const defaultNoOfGoroutines = 5
+const defaultNoOfCrawlsPerLink = 10
+const defaultDbUser = "guest"
+const defaultDbPwd = ""
+const defaultDbURL = "127.0.0.1:3306"
+const defaultDbName = ""
+const defaultFilePath = "defaultFile.dat"
 
-//main config struct
+//Config main config struct
 type Config struct {
 	CrawlerConfig CrawlerConfig
 	StoreConfig   StoreConfig
 }
 
-//crawler config struct
+//CrawlerConfig crawler config struct
 type CrawlerConfig struct {
 	NumOfGoroutines int
 	NumOfCrawls     int
 }
 
-//configuration for data storing, db connection settings, file path etc
+//StoreConfig configuration for data storing, db connection settings, file path
 type StoreConfig struct {
 	DbUser   string
 	DbPwd    string
-	DbUrl    string
+	DbURL    string
 	DbName   string
 	FilePath string
 }
 
-//returns pointer to new config struct
+// New returns pointer to new config struct
 func New() *Config {
 	return &Config{
 		CrawlerConfig: CrawlerConfig{
-			NumOfGoroutines: getEnvAsInt("GOROUTINES", DefaultNoOfGoroutines),
-			NumOfCrawls:     getEnvAsInt("NUMOFCRAWLS", DefaultNoOfCrawlsPerLink),
+			NumOfGoroutines: getEnvAsInt("GOROUTINES", defaultNoOfGoroutines),
+			NumOfCrawls:     getEnvAsInt("NUMOFCRAWLS", defaultNoOfCrawlsPerLink),
 		},
 		StoreConfig: StoreConfig{
-			DbUser:   getEnv("DBUSER", DefaultDbUser),
-			DbPwd:    getEnv("DBPWD", DefaultDbPwd),
-			DbUrl:    getEnv("DBURL", DefaultDbUrl),
-			DbName:   getEnv("DBNAME", DefaultDbName),
-			FilePath: getEnv("FILESTORE", DefaultFilePath),
+			DbUser:   getEnv("DBUSER", defaultDbUser),
+			DbPwd:    getEnv("DBPWD", defaultDbPwd),
+			DbURL:    getEnv("DBURL", defaultDbURL),
+			DbName:   getEnv("DBNAME", defaultDbName),
+			FilePath: getEnv("FILESTORE", defaultFilePath),
 		},
 	}
 }

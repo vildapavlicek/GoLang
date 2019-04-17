@@ -41,7 +41,7 @@ func TestGetResponse(t *testing.T) {
 	t.Run("OK Response", func(t *testing.T) {
 		status := http.StatusOK
 		want := http.StatusOK
-		server := makeHttpServer(status)
+		server := makeHTTPServer(status)
 		defer server.Close()
 		got := getResponse("GET", server.URL, "", myClient)
 		defer got.Body.Close()
@@ -63,11 +63,11 @@ func TestCrawl(t *testing.T) {
 			Shutdown:         make(chan bool, 1),
 		}
 
-		server := makeHttpServer(200)
+		server := makeHTTPServer(200)
 		defer server.Close()
 
 		firstLink := models.NextLink{
-			BaseUrl:       server.URL,
+			BaseURL:       server.URL,
 			Link:          "",
 			NOfIterations: 30,
 			Number:        0,
@@ -109,11 +109,11 @@ func TestCrawl(t *testing.T) {
 			Shutdown:         make(chan bool, 1),
 		}
 
-		server := makeHttpServer(200)
+		server := makeHTTPServer(200)
 		defer server.Close()
 
 		firstLink := models.NextLink{
-			BaseUrl:       server.URL,
+			BaseURL:       server.URL,
 			Link:          "",
 			NOfIterations: 20,
 			Number:        0,
@@ -155,11 +155,11 @@ func TestCrawl(t *testing.T) {
 			Shutdown:         make(chan bool, 1),
 		}
 
-		server := makeHttpServer(200)
+		server := makeHTTPServer(200)
 		defer server.Close()
 
 		firstLink := models.NextLink{
-			BaseUrl:       server.URL,
+			BaseURL:       server.URL,
 			Link:          "",
 			NOfIterations: 30,
 			Number:        0,
@@ -217,11 +217,11 @@ func TestRun(t *testing.T) {
 			Shutdown:         make(chan bool, 1),
 		}
 
-		server := makeHttpServer(200)
+		server := makeHTTPServer(200)
 		defer server.Close()
 
 		firstLink := models.NextLink{
-			BaseUrl:       server.URL,
+			BaseURL:       server.URL,
 			Link:          "",
 			NOfIterations: 30,
 			Number:        0,
@@ -265,11 +265,11 @@ func TestRun(t *testing.T) {
 			Shutdown:         make(chan bool, 1),
 		}
 
-		server := makeHttpServer(200)
+		server := makeHTTPServer(200)
 		defer server.Close()
 
 		firstLink := models.NextLink{
-			BaseUrl:       server.URL,
+			BaseURL:       server.URL,
 			Link:          "",
 			NOfIterations: 30,
 			Number:        0,
@@ -293,7 +293,7 @@ func TestRun(t *testing.T) {
 	})
 }
 
-func makeHttpServer(status int) *httptest.Server {
+func makeHTTPServer(status int) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(status)
 

@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/vildapavlicek/GoLang/youtubeCrawler/config"
 	"github.com/vildapavlicek/GoLang/youtubeCrawler/crawler"
 	"github.com/vildapavlicek/GoLang/youtubeCrawler/handlers"
@@ -23,10 +23,22 @@ import (
 var firstLink = "/watch?v=DT61L8hbbJ4"
 var secondLink = "/watch?v=Q3oItpVa9fs"
 
+var log = logrus.New()
+
 func init() {
-	err := godotenv.Load()
+	file, err := os.OpenFile("logs", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+
+	log.Out = file
+	//log.SetReportCaller(true)
+	log.SetFormatter(&logrus.JSONFormatter{})
+	log.SetLevel(logrus.TraceLevel) //change to be set by ENV
+
+	err = godotenv.Load()
 	if err != nil {
 		fmt.Println("Failed to load '.env' config file. All values will be set to default if not set as system environment variable")
+		log.WithFields(logrus.Fields{
+			"err": err.Error(),
+		}).Info(".env couldn't be open")
 	}
 }
 
@@ -44,16 +56,15 @@ func main() {
 		WriteTimeout: 60 * time.Second,
 	}
 
-	storeManager := store.New(conf.StoreConfig)
+	storeManager := store.New(conf.StoreConfig, log)
 	defer storeManager.StoreDestination.Close()
 
-	monster := crawler.New(storeManager, conf.CrawlerConfig, parsers.YoutubeParser{}, os.Stdout)
+	monster := crawler.New(storeManager, conf.CrawlerConfig, parsers.YoutubeParser{Log: log}, os.Stdout, log)
 	go monster.Run()
 
 	handlers.SetHandlers(m, monster)
 	go startServer(server)
 
-	//TODO: BUG if threads get stuck, doesn't shutdown
 	for {
 		select {
 		case <-storeManager.Shutdown:
@@ -68,11 +79,14 @@ func main() {
 }
 
 func startServer(s *http.Server) {
-	fmt.Printf("Server listening at port: %v\n", s.Addr)
+	fmt.Printf("Starting server at addr: %s", s.Addr)
+	log.WithFields(logrus.Fields{
+		"Addr": s.Addr,
+	}).Debug("Server listening")
 	err := s.ListenAndServe()
 	if err != nil {
-		log.Printf("Failed to start server. Reason: %v", err)
 	}
+
 }
 
 func catchSignal(stopChan chan os.Signal) {
