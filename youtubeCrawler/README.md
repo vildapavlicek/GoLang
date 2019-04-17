@@ -13,6 +13,8 @@ Payload example (only 1 link per request): <br>
 /watch?v=wOGu2j3PnFg<br>
 /watch?v=MH9FyLsfDzw<br>
 /watch?v=HZa1iFO0Juk<br>
+<br>
+Or use bash scrit postLinks.sh in /scripts folder
 </p>
 <p>
 Endpoint: localhost:8080/api/v1/stop<br>
