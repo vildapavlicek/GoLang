@@ -35,7 +35,6 @@ func (y YoutubeParser) ParseData(res *http.Response) (title, link string, err er
 		"method":      "ParseData",
 		"parsedTitle": title,
 		"parsedLink":  link,
-		"err":         err.Error(),
 	}).Trace("Parsed values at ParseData from parseNode(doc)")
 
 	if err != nil {
