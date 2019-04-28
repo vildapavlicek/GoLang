@@ -1,0 +1,29 @@
+version: '3.3'
+
+services:
+  youtubecrawler:
+    image: youtubecrawler
+    #build: .
+    environment:
+      GOROUTINES: 15
+      NUMOFCRAWLS: 100
+      DBUSER: crawler
+      DBPWD: app
+      DBURL: 0.0.0.0:3306
+      DBNAME: testdb
+      FILESTORE: linksData.dat
+    ports:
+      - 8080:8080
+    depends_on:
+      - "db"
+  db:
+    image: mysql:8.0.15
+    command: --default-authentication-plugin=mysql_native_password
+    #restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1111
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: crawler
+      MYSQL_PASSWORD: app
+    ports:
+      - 3306:3306
