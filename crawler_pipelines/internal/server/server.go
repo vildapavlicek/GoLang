@@ -2,11 +2,14 @@ package server
 
 import (
 	"fmt"
+
+	"github.com/gorilla/mux"
+
 	"net/http"
 	"time"
 )
 
-func newServer(address string, mux *http.ServeMux) *http.Server {
+func newServer(address string, m *mux.Router) *http.Server {
 
 	return &http.Server{
 		Addr:              address,
@@ -14,19 +17,19 @@ func newServer(address string, mux *http.ServeMux) *http.Server {
 		ReadTimeout:       20000 * time.Millisecond,
 		WriteTimeout:      20000 * time.Millisecond,
 		IdleTimeout:       60000 * time.Millisecond,
-		Handler:           mux,
+		Handler:           m,
 	}
-
 }
 
-func newMuxWithHandlers() *http.ServeMux {
-	m := http.NewServeMux()
+func newMuxWithHandlers() *mux.Router {
+	m := mux.NewRouter()
+
 	registerHandlers(m)
 	return m
 
 }
 
-func registerHandlers(m *http.ServeMux) {
+func registerHandlers(m *mux.Router) {
 	//m.Handle("")
 }
 
